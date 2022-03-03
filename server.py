@@ -1,4 +1,6 @@
 import socket
+import signal
+import sys
 
 
 class TCPServer:
@@ -6,22 +8,30 @@ class TCPServer:
     def __init__(self, host='127.0.0.1', port=8000):
         self.host = host
         self.port = port
+        self.socket_server = None
+        self.isActive = False
 
     def start(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((self.host, self.port))
-        s.listen(5)
+        self.socket_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket_server.bind((self.host, self.port))
+        self.socket_server.listen(5)
+        self.isActive = True
 
-        print("Listening at", s.getsockname())
+        print("Listening at", self.socket_server.getsockname())
 
-        while True:
-            conn, addr = s.accept()
-            print("Connected by", addr)
+        while self.isActive:
+            conn, addr = self.socket_server.accept()
+            print("Connected by {}".format(addr))
             data = conn.recv(1024)
             response = self.handle_request(data)
             conn.sendall(response)
             print(data)
             conn.close()
+
+    def close(self):
+        # self.isActive = False
+        self.socket_server.close()
+        print("Bye Bye")
 
     def handle_request(self, data):
         return data
@@ -104,4 +114,13 @@ class HTTPRequest:
 
 if __name__ == "__main__":
     server = HTTPServer()
+
+
+    def signal_handler(sig, frame):
+        print('Stopping...')
+        server.close()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    print('Press Ctrl+C to stop the server')
     server.start()
