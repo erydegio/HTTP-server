@@ -29,7 +29,7 @@ class TCPServer:
             conn.close()
 
     def close(self):
-        # self.isActive = False
+        self.isActive = False
         self.socket_server.close()
         print("Bye Bye")
 
