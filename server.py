@@ -30,7 +30,13 @@ class TCPServer:
 
     def close(self):
         self.isActive = False
-        self.socket_server.close()
+        try:
+            from socket import SHUT_RDWR
+            self.socket_server.shutdown(SHUT_RDWR)
+            self.socket_server.close()
+        except Exception:
+            pass
+
         print("Bye Bye")
 
     def handle_request(self, data):
@@ -120,6 +126,7 @@ if __name__ == "__main__":
         print('Stopping...')
         server.close()
         sys.exit(0)
+
 
     signal.signal(signal.SIGINT, signal_handler)
     print('Press Ctrl+C to stop the server')
