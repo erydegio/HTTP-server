@@ -1,13 +1,20 @@
 import socket
 import signal
 import sys
-
+from threading import Thread
+from tracemalloc import start
 
 class TCPServer:
 
     def __init__(self, host='127.0.0.1', port=8000):
         self.host = host
         self.port = port
+    
+    def async_start(self):
+        thread = Thread(target = self.start, args = ())
+        thread.daemon = True
+
+        thread.start()
 
     def start(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -20,7 +27,7 @@ class TCPServer:
                     print("Waiting for connections..")
                     conn, addr = s.accept()
                     with conn:
-                        print("Connected by {}".format(addr))
+                        print(f"Connected by {addr}")
                         data = conn.recv(1024)
                         response = self.handle_request(data)
                         conn.sendall(response)
@@ -112,12 +119,12 @@ class HTTPRequest:
 if __name__ == "__main__":
     server = HTTPServer()
 
-
+    server.async_start()
+    
     def signal_handler(sig, frame):
         print('Stopping...')
         sys.exit(0)
 
 
     signal.signal(signal.SIGINT, signal_handler)
-    print('Press Ctrl+C to stop the server')
-    server.start()
+    input('Press Ctrl+C to stop the server')
