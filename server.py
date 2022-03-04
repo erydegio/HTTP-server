@@ -1,30 +1,44 @@
 import socket
-
+import signal
+import sys
+from threading import Thread
+from tracemalloc import start
 
 class TCPServer:
 
     def __init__(self, host='127.0.0.1', port=8000):
         self.host = host
         self.port = port
+    
+    def async_start(self):
+        thread = Thread(target = self.start, args = ())
+        thread.daemon = True
+
+        thread.start()
 
     def start(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((self.host, self.port))
-        s.listen(5)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.bind((self.host, self.port))
+                s.listen(5)
+                print("Listening at", s.getsockname())
+                while True:
+                    print("Waiting for connections..")
+                    conn, addr = s.accept()
+                    with conn:
+                        print(f"Connected by {addr}")
+                        data = conn.recv(1024)
+                        response = self.handle_request(data)
+                        conn.sendall(response)
+                        print(data)
+            except Exception as e:
+                print(e)
+                pass
 
-        print("Listening at", s.getsockname())
 
-        while True:
-            conn, addr = s.accept()
-            print("Connected by", addr)
-            data = conn.recv(1024)
-            response = self.handle_request(data)
-            conn.sendall(response)
-            print(data)
-            conn.close()
-
-    def handle_request(self, data):
-        return data
+def handle_request(self, data):
+    return data
 
 
 class HTTPServer(TCPServer):
@@ -104,4 +118,13 @@ class HTTPRequest:
 
 if __name__ == "__main__":
     server = HTTPServer()
-    server.start()
+
+    server.async_start()
+    
+    def signal_handler(sig, frame):
+        print('Stopping...')
+        sys.exit(0)
+
+
+    signal.signal(signal.SIGINT, signal_handler)
+    input('Press Ctrl+C to stop the server')
