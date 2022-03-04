@@ -2,16 +2,16 @@ import socket
 import signal
 import sys
 from threading import Thread
-from tracemalloc import start
+
 
 class TCPServer:
 
     def __init__(self, host='127.0.0.1', port=8000):
         self.host = host
         self.port = port
-    
+
     def async_start(self):
-        thread = Thread(target = self.start, args = ())
+        thread = Thread(target=self.start, args=())
         thread.daemon = True
 
         thread.start()
@@ -120,7 +120,8 @@ if __name__ == "__main__":
     server = HTTPServer()
 
     server.async_start()
-    
+
+
     def signal_handler(sig, frame):
         print('Stopping...')
         sys.exit(0)
