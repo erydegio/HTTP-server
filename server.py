@@ -8,39 +8,30 @@ class TCPServer:
     def __init__(self, host='127.0.0.1', port=8000):
         self.host = host
         self.port = port
-        self.socket_server = None
-        self.isActive = False
 
     def start(self):
-        self.socket_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket_server.bind((self.host, self.port))
-        self.socket_server.listen(5)
-        self.isActive = True
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.bind((self.host, self.port))
+                s.listen(5)
+                print("Listening at", s.getsockname())
+                while True:
+                    print("Waiting for connections..")
+                    conn, addr = s.accept()
+                    with conn:
+                        print("Connected by {}".format(addr))
+                        data = conn.recv(1024)
+                        response = self.handle_request(data)
+                        conn.sendall(response)
+                        print(data)
+            except Exception as e:
+                print(e)
+                pass
 
-        print("Listening at", self.socket_server.getsockname())
 
-        while self.isActive:
-            conn, addr = self.socket_server.accept()
-            print("Connected by {}".format(addr))
-            data = conn.recv(1024)
-            response = self.handle_request(data)
-            conn.sendall(response)
-            print(data)
-            conn.close()
-
-    def close(self):
-        self.isActive = False
-        try:
-            from socket import SHUT_RDWR
-            self.socket_server.shutdown(SHUT_RDWR)
-            self.socket_server.close()
-        except Exception:
-            pass
-
-        print("Bye Bye")
-
-    def handle_request(self, data):
-        return data
+def handle_request(self, data):
+    return data
 
 
 class HTTPServer(TCPServer):
@@ -124,7 +115,6 @@ if __name__ == "__main__":
 
     def signal_handler(sig, frame):
         print('Stopping...')
-        server.close()
         sys.exit(0)
 
 
