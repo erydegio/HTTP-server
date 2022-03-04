@@ -16,7 +16,7 @@ class TCPServer:
          Start the server asynchronously because s.accept() is blocking
          and doesn't intercept keyboardinterrupt Ctrl+C
         """
-        thread = Thread(target = self.start, args = ())
+        thread = Thread(target=self.start, args=())
         thread.daemon = True
         thread.start()
 
@@ -180,8 +180,7 @@ if __name__ == "__main__":
     server = HTTPServer()
 
     server.async_start()
-
-
+    
     def signal_handler(sig, frame):
         print('Stopping...')
         sys.exit(0)
