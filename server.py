@@ -1,6 +1,7 @@
 import socket
 import signal
 import sys
+from datetime import datetime
 from threading import Thread
 
 
@@ -9,17 +10,14 @@ class TCPServer:
     def __init__(self, host='127.0.0.1', port=8000):
         self.host = host
         self.port = port
-    
 
     def async_start(self):
         """
-         Start the server asynchronously because s.accept() is blocking
-         and doesn't intercept keyboardinterrupt Ctrl+C
+         Start the server in a thread.
         """
         thread = Thread(target=self.start, args=())
         thread.daemon = True
         thread.start()
-
 
     def start(self):
 
@@ -27,7 +25,7 @@ class TCPServer:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
             try:
-                # TO-DO
+                # Reuse the socket binding
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
                 # Bind the socket object to the address and port
@@ -56,7 +54,6 @@ class TCPServer:
                 print(e)
                 pass
 
-
     def handle_request(self, data):
         """
         Handles incoming data and returns a response.
@@ -66,9 +63,8 @@ class TCPServer:
 
 
 class HTTPServer(TCPServer):
-
     headers = {
-        "Server": "TomorrowDevs Server",
+        "Server": "AwsomeX server",
         "Content-Type": "text/html",
     }
 
@@ -76,7 +72,6 @@ class HTTPServer(TCPServer):
         200: "OK",
         501: "Not Implemented",
     }
-
 
     def handle_request(self, data):
         """
@@ -95,7 +90,6 @@ class HTTPServer(TCPServer):
 
         return response
 
-
     def handle_unknown_method(self, request):
 
         response_line = self.response_line(status_code=501)
@@ -106,22 +100,21 @@ class HTTPServer(TCPServer):
 
         return b"".join([response_line, response_headers, blank_line, response_body])
 
-
     def handle_GET(self, request):
 
         response_line = self.response_line(status_code=200)
         response_headers = self.response_headers()
+        date_time = datetime.now()
         blank_line = b"\r\n"
 
         response_body = b"""
             <html>
                 <body>
-                    <h1>Hi, I'm TomorrowDevs Server!</h1>
+                    <h1>Hi, I'm AwesomeX Server!</h1> 
                 </body>
             </html>
-            """
+            """ + bytes(date_time.strftime("%H:%M:%S"), 'utf8')
         return b"".join([response_line, response_headers, blank_line, response_body])
-
 
     def response_line(self, status_code):
         """Returns response line"""
@@ -129,8 +122,7 @@ class HTTPServer(TCPServer):
         reason = self.status_codes[status_code]
         line = f"HTTP/1.1 {status_code} {reason}"
 
-        return line.encode() # convert str to bytes
-
+        return line.encode()  # convert str to bytes
 
     def response_headers(self, extra_headers=None):
         """
@@ -139,7 +131,7 @@ class HTTPServer(TCPServer):
         extra headers for the current response
         """
 
-        headers_copy = self.headers.copy() # make a local copy of headers
+        headers_copy = self.headers.copy()  # make a local copy of headers
 
         if extra_headers:
             headers_copy.update(extra_headers)
@@ -155,10 +147,9 @@ class HTTPRequest:
     def __init__(self, data):
         self.method = None
         self.uri = None
-        self.http_version = "1.1" # Default to HTTP/1.1 if request doesn't provide a version
-        
-        self.parse(data)
+        self.http_version = "1.1"  # Default to HTTP/1.1 if request doesn't provide a version
 
+        self.parse(data)
 
     def parse(self, data):
         """Parse the request data"""
@@ -180,7 +171,8 @@ if __name__ == "__main__":
     server = HTTPServer()
 
     server.async_start()
-    
+
+
     def signal_handler(sig, frame):
         print('Stopping...')
         sys.exit(0)
